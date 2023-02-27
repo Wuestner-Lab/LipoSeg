@@ -1,0 +1,39 @@
+{
+  "_comment": "Please read documentation, before making changes.",
+  "models": [
+    {
+      "name": "Yeast cell membrane",
+      "hdf5": "cell.hdf5",
+      "imagej_col": "blue",
+      "pv_col" : "white",
+      "convert_sphere": false,
+      "opacity": 0.5,
+      "min_voxels": 500000,
+      "post_process": "obshv",
+      "threshold": 0.6
+    },
+    {
+      "name": "Yeast vacuole",
+      "hdf5": "vac.hdf5",
+      "imagej_col": "red",
+      "pv_col" : "red",
+      "convert_sphere": false,
+      "opacity": 0.5,
+      "min_voxels": 1000,
+      "post_process": "obsmf",
+      "threshold": 0.5
+    },	
+    {
+      "name": "Yeast lipid droplets",
+      "hdf5": "lipid.hdf5",
+      "imagej_col": "green",
+      "pv_col": "green",
+      "convert_sphere": false,
+      "opacity": 0.8,
+      "min_voxels": 250,
+      "post_process": "obsvhm",
+      "threshold": 0.4
+    }
+  ]
+}
+
