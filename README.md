@@ -14,7 +14,7 @@ data using deep learning*' by Egebjerg et al.
 
 [pipeline-figure]: https://i.imgur.com/MrwwpZZ.png
 
-[paper]: https://www.doi.org/
+[paper]: https://www.biorxiv.org/content/10.1101/2023.02.27.530171v1
 
 ## Installation
 
