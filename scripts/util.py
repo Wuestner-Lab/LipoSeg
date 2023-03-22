@@ -67,7 +67,9 @@ def quantile_normalize(img, distribution=quantiles):
         normalized image
      """
     order = np.argsort(img.flatten())  # get the rankings of the flattened frame
-    return np.take_along_axis(distribution, order, 0).reshape((512, 512))  # take quantiles values based on ordered rankings, then reshape the image.
+    location = np.argsort(order)
+    return np.take_along_axis(distribution, location, 0).reshape((512, 512))  # take quantiles values based on ordered rankings, then reshape the image.
+
 
 
 # returns img normalized to random normal distribution with 0 mean and 0.5 std dev for a 512x512 image
