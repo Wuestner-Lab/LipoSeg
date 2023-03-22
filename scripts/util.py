@@ -24,6 +24,9 @@ def progress_bar(current, total, bar_length=20, verbose=True):
      verbose : bool
         Whether to output or not
      """
+    if not total > 0:
+        return False # avoid 0 division
+
     if verbose:
         fraction = current / total
 
