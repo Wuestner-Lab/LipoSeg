@@ -23,12 +23,8 @@ from scripts.watershed import distance_transform_watershed
 
 
 # quick helper function for code readability
-def should_post_process(args, config, option, channel):
-    if args.postprocess == "config":
-        ret_val = option in config["models"][channel]["post_process"]
-    else:
-        ret_val = option in args.postprocess
-    return ret_val
+def should_post_process(config, option, channel):
+    return option in config["models"][channel]["post_process"]
 
 
 def main():
@@ -188,28 +184,24 @@ def segment_volume(tomo_volume, args, config):
         if args.raw:  # if user wants raw output, it's now or never
             io.imsave(f"{args.out}/raw_{chan}_{filename}", output_volume[:, chan, :, :])
 
-        if should_post_process(args, config, "o", chan):
+        if should_post_process(config, "o", chan):
             # apply mask generated earlier from channel 0 for outlier removal
             output_volume[:, chan, :, :] = apply_mask(output_volume[:, chan, :, :], mask)
-        '''
-        if should_post_process(args, config, "a", chan):
-            # EMA before making
-            output_volume[:, chan, :, :] = ema_stack(output_volume[:, chan, :, :], alpha=0.6)
-        '''
-        if should_post_process(args, config, "a", chan):
+
+        if should_post_process(config, "a", chan):
             output_volume[:, chan, :, :] = gaussian_filter(output_volume[:, chan, :, :], sigma=3)
 
         # thresholding
         binary_volume[:, chan, :, :] = ((output_volume[:, chan, :, :] > model_info['threshold']) * np.ones(
             (stack_size - 4, 512, 512))).astype(np.uint8)
 
-        if should_post_process(args, config, "h", chan):
+        if should_post_process(config, "h", chan):
             # do 3d instance seg to help with instance seg
             binary_volume[:, chan, :, :] = binary_fill_holes(binary_volume[:, chan, :, :])
 
         log_msg("Conducting instance segmentation")
 
-        if should_post_process(args, config, "f", chan):  # connectivity based
+        if should_post_process(config, "f", chan):  # connectivity based
             labeled_vol, num_labels = fast_label_volume(binary_volume[:, chan, :, :])
             labeled_vol = labeled_vol.astype(np.uint8)
         else:
@@ -226,20 +218,20 @@ def segment_volume(tomo_volume, args, config):
             filtered_vol = (labeled_vol == i).astype(np.uint8)
             # check if we have volume minimum and enough voxels to continue if so.
             num_voxels = np.sum(filtered_vol)
-            if should_post_process(args, config, "v", chan) and num_voxels < model_info['min_voxels']:
+            if should_post_process(config, "v", chan) and num_voxels < model_info['min_voxels']:
                 pass
             else:  # if we don't have volume minimum or we meet the threshold, continue
-                if should_post_process(args, config, "c", chan):
+                if should_post_process(config, "c", chan):
                     filtered_vol = force_convex(filtered_vol)
                 # fill in Z direction, since it is most susceptible to missing cone.
-                if should_post_process(args, config, "h", chan):
+                if should_post_process(config, "h", chan):
                     for j in range(len(binary_volume)):
                         binary_volume[j, chan, :, :] = binary_fill_holes(binary_volume[j, chan, :, :])
 
                 instance_vol[:, chan, :, :] = (instance_vol[:, chan, :, :] + (filtered_vol * i))
 
         binary_volume[:, chan, :, :] = (instance_vol[:, chan, :, :] > 0)
-        if should_post_process(args, config, "m", chan):
+        if should_post_process(config, "m", chan):
             # apply channel 0 using specified thresholding (without applying it first)
             binary_volume[:, chan, :, :] = apply_mask_stack(binary_volume[:, chan, :, :], binary_volume[:, 0, :, :])
             instance_vol[:, chan, :, :] = apply_mask_stack(instance_vol[:, chan, :, :], binary_volume[:, 0, :, :])
@@ -300,7 +292,7 @@ def render_segmentation(seg_volume, args, config):
                 mesh = mesh_from_volume(filtered_vol, force_sphere=model_cfg["convert_sphere"], scale=args.scale)
                 # flip such that image coords match the 3D coords
                 mesh = mesh.flip_y(point=[0.0, 0.0, 0.0], inplace=False)
-                if should_post_process(args, config, "s", chan):
+                if should_post_process(config, "s", chan):
                     mesh = mesh.smooth(n_iter=500)
                 chan_measured_vol += mesh.volume
                 p.add_mesh(mesh, color=col, opacity=model_cfg["opacity"], diffuse=0.5, specular=0.5, ambient=0.5)
